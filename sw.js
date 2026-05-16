@@ -1,8 +1,8 @@
-// Strategic Management — Service Worker
-// Cache-first for static assets, network-first for external resources
+// Strategic Management — Service Worker v3
+// Network-first strategy: always serve fresh content when online,
+// fall back to cache only when offline.
 
-const CACHE_NAME = 'smc-course-v2';
-const CACHE_VERSION = 1;
+const CACHE_NAME = 'smc-course-v3';
 
 const STATIC_ASSETS = [
   './Strategic Management.html',
@@ -23,67 +23,46 @@ const STATIC_ASSETS = [
   './icons/icon-512.png'
 ];
 
-// ── Install: pre-cache all static assets ──────────────────────────────────
+// ── Install: pre-cache, skip waiting immediately ──────────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()) // take over immediately
   );
 });
 
-// ── Activate: clean up old caches ─────────────────────────────────────────
+// ── Activate: delete ALL old caches, claim all clients ───────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(key => caches.delete(key)))) // delete ALL old caches
+      .then(() => self.clients.claim()) // control all open pages now
   );
 });
 
-// ── Fetch: cache-first for our assets, network-first for external ─────────
+// ── Fetch: NETWORK-FIRST — always try network, cache as fallback ──────────
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
-  // External requests (CDNs, Google Fonts) — network first, fall back to cache
-  if (url.origin !== self.location.origin) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (response && response.status === 200) {
-            const cloned = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Our own assets — cache first, then network
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response && response.status === 200) {
+    fetch(event.request)
+      .then(response => {
+        // If we got a valid response, cache it and return it
+        if (response && response.status === 200 && response.type !== 'opaque') {
           const cloned = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
         }
         return response;
-      });
-    })
+      })
+      .catch(() => {
+        // Network failed — serve from cache (offline mode)
+        return caches.match(event.request);
+      })
   );
 });
 
-// ── Message: force cache refresh ──────────────────────────────────────────
+// ── Message handler ───────────────────────────────────────────────────────
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

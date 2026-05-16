@@ -171,18 +171,44 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 
-    // Register service worker for PWA / offline support
+    // Register service worker — force immediate takeover on update
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then(reg => {
             console.log('[SW] Registered. Scope:', reg.scope);
-            // Check for updates every time the page loads
+
+            // If a new SW is waiting, tell it to skip waiting immediately
+            const takeOver = (worker) => {
+              worker.postMessage({ type: 'SKIP_WAITING' });
+            };
+
+            if (reg.waiting) {
+              takeOver(reg.waiting);
+            }
+
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  takeOver(newWorker);
+                }
+              });
+            });
+
+            // When controller changes (new SW took over), reload for fresh content
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+              }
+            });
+
+            // Force check for updates on every page load
             reg.update();
           })
-          .catch(err => {
-            console.warn('[SW] Registration failed:', err);
-          });
+          .catch(err => console.warn('[SW] Registration failed:', err));
       });
     }
   </script>
