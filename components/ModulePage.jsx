@@ -1,29 +1,29 @@
 // components/ModulePage.jsx
+// All modules (including Module 11) use identical MCQ assessment flow
 
 const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) => {
-  const [view, setView] = React.useState('overview'); // 'overview' | lesson id | 'quiz' | 'certificate' | 'capstone'
+  const [view, setView] = React.useState('overview');
   const p = progress[mod.id] || {};
   const lessons = mod.lessons;
 
   const isLessonDone = (lessonId) => !!(p.lessons && p.lessons[lessonId]);
   const allLessonsDone = lessons.every(l => isLessonDone(l.id));
   const quizPassed = (p.quizScore || 0) >= 70;
-  const isCapstone = mod.id === 11;
 
-  // Mark lesson complete
   const completeLesson = (lessonId) => {
-    const updated = {
+    updateProgress(mod.id, {
       ...p,
       started: true,
       lessons: { ...(p.lessons || {}), [lessonId]: true }
-    };
-    updateProgress(mod.id, updated);
+    });
   };
 
-  // Handle quiz pass/fail
   const handleQuizPass = (score) => {
-    const updated = { ...p, quizScore: score, completed: true, completedDate: new Date().toISOString() };
-    updateProgress(mod.id, updated);
+    updateProgress(mod.id, {
+      ...p, quizScore: score,
+      completed: true,
+      completedDate: new Date().toISOString()
+    });
     setView('certificate');
   };
 
@@ -31,19 +31,18 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
     updateProgress(mod.id, { ...p, quizScore: score });
   };
 
-  // Capstone submit
-  const handleCapstoneSubmit = () => {
-    const updated = { ...p, completed: true, completedDate: new Date().toISOString() };
-    updateProgress(mod.id, updated);
-    setView('certificate');
-  };
-
   const getLessonIdx = (id) => lessons.findIndex(l => l.id === id);
   const currentLessonObj = lessons.find(l => l.id === view);
 
+  const typeLabel = {
+    concept: 'Concept', framework: 'Framework', tool: 'Tool',
+    disruptive: 'Disruptive', future: 'Future', brief: 'Brief'
+  };
+
   return (
     <div className="module-page">
-      {/* Lesson sidebar */}
+
+      {/* ── Lesson Sidebar ────────────────────────────────────────────── */}
       <div className="lesson-sidebar">
         <div className="lesson-sidebar-header">
           <button className="lesson-sidebar-back" onClick={() => setRoute('dashboard')}>
@@ -54,6 +53,7 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
         </div>
 
         <div className="lesson-sidebar-nav">
+
           {/* Overview */}
           <div
             className={`lesson-nav-item ${view === 'overview' ? 'active' : ''}`}
@@ -62,12 +62,12 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
             <div className={`lesson-nav-check ${view === 'overview' ? 'active-ring' : ''}`}>◎</div>
             <div className="lesson-nav-text">
               <div className="lesson-nav-title">Module Overview</div>
-              <div className="lesson-nav-time">Objectives & Plan</div>
+              <div className="lesson-nav-time">Objectives &amp; Plan</div>
             </div>
           </div>
 
           {/* Lessons */}
-          {lessons.map((lesson, idx) => {
+          {lessons.map((lesson) => {
             const done = isLessonDone(lesson.id);
             const isActive = view === lesson.id;
             return (
@@ -83,48 +83,35 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
                   <div className="lesson-nav-title">{lesson.title}</div>
                   <div className="lesson-nav-time">{lesson.readTime}</div>
                   <span className={`lesson-nav-type type-${lesson.type}`}>
-                    {lesson.type === 'disruptive' ? 'Disruptive' : lesson.type === 'future' ? 'Future' : lesson.type}
+                    {typeLabel[lesson.type] || lesson.type}
                   </span>
                 </div>
               </div>
             );
           })}
 
-          {/* Quiz / Capstone */}
-          {!isCapstone && (
-            <div
-              className={`lesson-nav-item ${view === 'quiz' ? 'active' : ''} ${quizPassed ? 'completed' : ''}`}
-              onClick={() => setView('quiz')}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className={`lesson-nav-check ${quizPassed ? 'done' : view === 'quiz' ? 'active-ring' : ''}`}>
-                {quizPassed ? '✓' : ''}
+          {/* Assessment — available for every module, always clickable */}
+          <div
+            className={`lesson-nav-item ${view === 'quiz' ? 'active' : ''} ${quizPassed ? 'completed' : ''}`}
+            onClick={() => setView('quiz')}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className={`lesson-nav-check ${quizPassed ? 'done' : view === 'quiz' ? 'active-ring' : ''}`}>
+              {quizPassed ? '✓' : ''}
+            </div>
+            <div className="lesson-nav-text">
+              <div className="lesson-nav-title">
+                {mod.id === 11 ? 'Capstone Assessment' : 'Module Assessment'}
               </div>
-              <div className="lesson-nav-text">
-                <div className="lesson-nav-title">Module Assessment</div>
-                <div className="lesson-nav-time">
-                  {quizPassed ? `Passed · ${p.quizScore}%` : !allLessonsDone ? 'MCQ · Auto-graded' : 'MCQ · Auto-graded'}
-                </div>
+              <div className="lesson-nav-time">
+                {quizPassed
+                  ? `Passed · ${p.quizScore}%`
+                  : 'MCQ · Auto-graded · 70% to pass'}
               </div>
             </div>
-          )}
+          </div>
 
-          {isCapstone && (
-            <div
-              className={`lesson-nav-item ${view === 'capstone' ? 'active' : ''} ${p.completed ? 'completed' : ''}`}
-              onClick={() => setView('capstone')}
-            >
-              <div className={`lesson-nav-check ${p.completed ? 'done' : view === 'capstone' ? 'active-ring' : ''}`}>
-                {p.completed ? '✓' : ''}
-              </div>
-              <div className="lesson-nav-text">
-                <div className="lesson-nav-title">Submit Capstone</div>
-                <div className="lesson-nav-time">{p.completed ? 'Submitted' : 'Final Project'}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Certificate */}
+          {/* Certificate — unlocked after passing */}
           {p.completed && (
             <div
               className={`lesson-nav-item ${view === 'certificate' ? 'active' : ''}`}
@@ -132,42 +119,60 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
             >
               <div className="lesson-nav-check done">★</div>
               <div className="lesson-nav-text">
-                <div className="lesson-nav-title">Module Certificate</div>
-                <div className="lesson-nav-time">View & Download</div>
+                <div className="lesson-nav-title">
+                  {mod.id === 11 ? 'Course Certificate' : 'Module Certificate'}
+                </div>
+                <div className="lesson-nav-time">View &amp; Download</div>
               </div>
             </div>
           )}
+
         </div>
 
         <div className="lesson-sidebar-actions">
-          {!isCapstone && allLessonsDone && !quizPassed && (
-            <button className="btn btn-primary btn-sm btn-full" onClick={() => setView('quiz')}>
-              Take Assessment →
+          {!quizPassed && (
+            <button
+              className="btn btn-primary btn-sm btn-full"
+              onClick={() => setView('quiz')}
+            >
+              {allLessonsDone ? 'Take Assessment →' : 'Preview Assessment →'}
             </button>
           )}
           {p.completed && (
-            <button className="btn btn-secondary btn-sm btn-full" onClick={() => setView('certificate')}>
-              View Certificate
+            <button
+              className="btn btn-secondary btn-sm btn-full"
+              onClick={() => setView('certificate')}
+            >
+              View Certificate ✦
             </button>
           )}
         </div>
       </div>
 
-      {/* Main content */}
+      {/* ── Main Content ──────────────────────────────────────────────── */}
       <div className="lesson-content-area">
-        {view === 'overview' && <ModuleOverview mod={mod} onStart={() => setView(lessons[0].id)} progress={p} quizPassed={quizPassed} setView={setView} allLessonsDone={allLessonsDone} />}
+
+        {view === 'overview' && (
+          <ModuleOverview
+            mod={mod}
+            onStart={() => setView(lessons[0].id)}
+            progress={p}
+            quizPassed={quizPassed}
+            setView={setView}
+            allLessonsDone={allLessonsDone}
+          />
+        )}
 
         {currentLessonObj && (
           <LessonView
             mod={mod}
             lesson={currentLessonObj}
             isCompleted={isLessonDone(currentLessonObj.id)}
-            onComplete={() => { completeLesson(currentLessonObj.id); }}
+            onComplete={() => completeLesson(currentLessonObj.id)}
             onNext={() => {
               const idx = getLessonIdx(currentLessonObj.id);
               if (idx < lessons.length - 1) setView(lessons[idx + 1].id);
-              else if (!isCapstone) setView('quiz');
-              else setView('capstone');
+              else setView('quiz');
             }}
             onPrev={() => {
               const idx = getLessonIdx(currentLessonObj.id);
@@ -179,7 +184,7 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
           />
         )}
 
-        {view === 'quiz' && !isCapstone && (
+        {view === 'quiz' && (
           <Quiz
             mod={mod}
             onPass={handleQuizPass}
@@ -188,30 +193,34 @@ const ModulePage = ({ mod, progress, updateProgress, setRoute, studentName }) =>
           />
         )}
 
-        {view === 'capstone' && isCapstone && (
-          <CapstoneView mod={mod} progress={p} onSubmit={handleCapstoneSubmit} updateProgress={updateProgress} />
-        )}
-
         {view === 'certificate' && p.completed && (
           <Certificate
             mod={mod}
+            isFinal={mod.id === 11}
             studentName={studentName || p.studentName}
             completedDate={p.completedDate}
             certId={p.certId || ('SMC-M' + mod.id + '-' + Date.now().toString(36).toUpperCase())}
           />
         )}
+
       </div>
     </div>
   );
 };
 
-/* Module Overview subcomponent */
+/* ── Module Overview ────────────────────────────────────────────────────── */
 const ModuleOverview = ({ mod, onStart, progress, quizPassed, setView, allLessonsDone }) => {
   const completedLessons = Object.values(progress.lessons || {}).filter(Boolean).length;
   const total = mod.lessons.length;
 
+  const typeLabel = {
+    concept: 'Concept', framework: 'Framework', tool: 'Tool',
+    disruptive: 'Disruptive', future: 'Future', brief: 'Brief'
+  };
+
   return (
     <div className="module-overview">
+      {/* Header */}
       <div className="module-overview-header">
         <div className="module-num-badge">
           <span style={{ background: mod.color + '22', color: mod.color, padding: '2px 10px', borderRadius: 99, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
@@ -234,12 +243,13 @@ const ModuleOverview = ({ mod, onStart, progress, quizPassed, setView, allLesson
           )}
           {quizPassed && (
             <span style={{ fontSize: '0.8rem', color: 'oklch(45% 0.12 145)', fontWeight: 600 }}>
-              ✓ Assessment Passed
+              ✓ Assessment Passed · {progress.quizScore}%
             </span>
           )}
         </div>
       </div>
 
+      {/* Learning Objectives */}
       <div className="objectives-section">
         <div className="objectives-title">Learning Objectives</div>
         <ul className="objectives-list">
@@ -252,67 +262,91 @@ const ModuleOverview = ({ mod, onStart, progress, quizPassed, setView, allLesson
         </ul>
       </div>
 
-      {/* Lessons preview */}
+      {/* Auto-graded MCQ banner */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px 22px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 14, boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: 1 }}>✦</div>
+        <div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+            Auto-Graded Multiple Choice Assessment
+          </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            <strong>8 multiple-choice questions</strong>, graded instantly by the system. No essays. No manual grading.
+            Score <strong>70% or above</strong> to pass and unlock your certificate. Unlimited retakes allowed.
+          </div>
+        </div>
+      </div>
+
+      {/* Lesson Plan */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '24px 28px', marginBottom: 24, boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 500, marginBottom: 16 }}>Lesson Plan</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {mod.lessons.map((lesson, idx) => {
             const done = progress.lessons && progress.lessons[lesson.id];
-            const typeLabel = { concept: 'Concept', framework: 'Framework', tool: 'Tool', disruptive: 'Disruptive', future: 'Future', brief: 'Brief' };
             return (
-              <div key={lesson.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 0', borderBottom: idx < mod.lessons.length - 1 ? '1px solid var(--border)' : 'none' }}
-                onClick={() => setView(lesson.id)} style2={{ cursor: 'pointer' }}>
+              <div
+                key={lesson.id}
+                onClick={() => setView(lesson.id)}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 0', borderBottom: idx < mod.lessons.length - 1 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }}
+              >
                 <div style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid', borderColor: done ? '#22c55e' : 'var(--border-md)', background: done ? '#f0fdf4' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: done ? '#22c55e' : 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
                   {done ? '✓' : idx + 1}
                 </div>
-                <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setView(lesson.id)}>
-                  <div style={{ fontSize: '0.87rem', fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{lesson.title}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.87rem', fontWeight: 500, color: 'var(--text)', marginBottom: 3 }}>{lesson.title}</div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span className={`lesson-nav-type type-${lesson.type}`}>{typeLabel[lesson.type]}</span>
+                    <span className={`lesson-nav-type type-${lesson.type}`}>{typeLabel[lesson.type] || lesson.type}</span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{lesson.readTime}</span>
                   </div>
                 </div>
               </div>
             );
           })}
+
+          {/* Assessment row */}
+          <div
+            onClick={() => setView('quiz')}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 0', cursor: 'pointer' }}
+          >
+            <div style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid', borderColor: quizPassed ? '#22c55e' : 'var(--amber)', background: quizPassed ? '#f0fdf4' : 'var(--amber-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: quizPassed ? '#22c55e' : 'var(--amber-dark)', flexShrink: 0, marginTop: 1 }}>
+              {quizPassed ? '✓' : '?'}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.87rem', fontWeight: 500, color: 'var(--text)', marginBottom: 3 }}>
+                {mod.id === 11 ? 'Capstone Assessment' : 'Module Assessment'}
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span className="lesson-nav-type type-framework">MCQ · Auto-graded</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>8 questions · 70% to pass</span>
+                {quizPassed && <span style={{ fontSize: '0.7rem', color: 'oklch(45% 0.12 145)', fontWeight: 600 }}>Score: {progress.quizScore}%</span>}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Mini case preview */}
+      {/* Mini case */}
       {mod.miniCase && (
-        <div style={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '22px 26px', marginBottom: 24 }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber)', marginBottom: 8 }}>Mini Case Study</div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>{mod.miniCase.title}</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{mod.miniCase.company} · {mod.miniCase.era}</div>
+        <div style={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px 24px', marginBottom: 20 }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber)', marginBottom: 6 }}>Mini Case Study</div>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', fontWeight: 500, color: 'var(--text)', marginBottom: 3 }}>{mod.miniCase.title}</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{mod.miniCase.company} · {mod.miniCase.era}</div>
         </div>
       )}
 
       {/* Future section */}
       {mod.futureSection && (
-        <div style={{ background: 'linear-gradient(135deg, var(--amber-light), var(--bg-card))', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '22px 26px', marginBottom: 32 }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber)', marginBottom: 8 }}>Future of Strategy</div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', fontWeight: 500, color: 'var(--text)' }}>{mod.futureSection}</div>
+        <div style={{ background: 'var(--amber-light)', border: '1px solid rgba(200,122,40,0.25)', borderRadius: 'var(--radius)', padding: '20px 24px', marginBottom: 28 }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber)', marginBottom: 6 }}>Future of Strategy</div>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', fontWeight: 500, color: 'var(--text)', lineHeight: 1.4 }}>{mod.futureSection}</div>
         </div>
       )}
 
-      {/* Assessment info banner */}
-      {mod.id !== 11 && (
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px 22px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <div style={{ fontSize: '1.2rem', flexShrink: 0, marginTop: 2 }}>✦</div>
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Auto-Graded Assessment</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              This module includes <strong>8 multiple-choice questions</strong> auto-graded instantly by the system. No manual grading required. Score <strong>70% or above</strong> to pass and unlock your module certificate. You may retake as many times as needed.
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* CTAs */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <button className="btn btn-primary btn-lg" onClick={onStart}>
           {progress.started ? 'Continue Learning →' : 'Start Module →'}
         </button>
-        {mod.id !== 11 && !quizPassed && (
+        {!quizPassed && (
           <button className="btn btn-secondary btn-lg" onClick={() => setView('quiz')}>
             {allLessonsDone ? 'Take Assessment →' : 'Preview Assessment'}
           </button>
@@ -327,124 +361,5 @@ const ModuleOverview = ({ mod, onStart, progress, quizPassed, setView, allLesson
   );
 };
 
-/* Capstone View */
-const CapstoneView = ({ mod, progress, onSubmit, updateProgress }) => {
-  const [text, setText] = React.useState(() => {
-    try { return JSON.parse(localStorage.getItem('smc_capstone') || '{}').content || ''; } catch { return ''; }
-  });
-  const [submitted, setSubmitted] = React.useState(progress.completed || false);
-  const [option, setOption] = React.useState('A');
-
-  const save = (val) => {
-    setText(val);
-    localStorage.setItem('smc_capstone', JSON.stringify({ content: val, option }));
-  };
-
-  const handleSubmit = () => {
-    setSubmitted(true);
-    onSubmit();
-  };
-
-  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-
-  if (submitted) {
-    return (
-      <div className="capstone-view">
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: 20 }}>✦</div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 400, marginBottom: 12 }}>
-            Capstone Submitted
-          </div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', maxWidth: 480, margin: '0 auto 28px', lineHeight: 1.7 }}>
-            Your integrative strategic analysis has been recorded. Your course certificate is now available.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-            <button className="btn btn-secondary" onClick={() => setSubmitted(false)}>
-              Review Submission
-            </button>
-            <button className="btn btn-primary" onClick={() => updateProgress(mod.id, { ...progress, completed: true, completedDate: progress.completedDate })}>
-              View Certificate →
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const options = [
-    { id: 'A', label: 'Corporate Strategy Analysis', desc: 'A publicly listed company — full strategic analysis and recommendations' },
-    { id: 'B', label: 'Industry Transformation Analysis', desc: 'An industry undergoing disruption — analysis of forces, winners, losers, and prescriptions' },
-    { id: 'C', label: 'Entrepreneurial Strategy', desc: 'A new venture or major initiative — business model, positioning, and implementation plan' },
-    { id: 'D', label: 'Institutional Strategy', desc: 'A nonprofit, university, or government agency — adapted strategic frameworks for non-market contexts' },
-  ];
-
-  return (
-    <div className="capstone-view">
-      <div style={{ marginBottom: 36 }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber)', marginBottom: 12 }}>Integrative Capstone</div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.2rem', fontWeight: 400, lineHeight: 1.2, marginBottom: 12 }}>Strategic Analysis Project</h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.7, maxWidth: 640 }}>
-          Synthesize all course frameworks into a coherent strategic analysis. Choose one of the four project options below. Target 4,000–6,000 words of analytical content. The goal is not comprehensiveness — it is intellectual rigor, strategic judgment, and precise, evidence-based recommendation.
-        </p>
-      </div>
-
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 500, marginBottom: 14 }}>Choose Your Project Option</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {options.map(opt => (
-            <div
-              key={opt.id}
-              onClick={() => setOption(opt.id)}
-              style={{
-                padding: '16px 18px',
-                border: '1.5px solid',
-                borderColor: option === opt.id ? 'var(--amber)' : 'var(--border)',
-                borderRadius: 'var(--radius)',
-                cursor: 'pointer',
-                background: option === opt.id ? 'var(--amber-light)' : 'var(--bg-card)',
-                transition: 'all 0.15s'
-              }}
-            >
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: option === opt.id ? 'var(--amber-dark)' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Option {opt.id}</div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{opt.label}</div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{opt.desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 500 }}>Your Analysis</div>
-          <div style={{ fontSize: '0.75rem', color: wordCount >= 4000 ? 'oklch(45% 0.12 145)' : 'var(--text-muted)' }}>
-            {wordCount.toLocaleString()} words {wordCount >= 4000 && '✓'}
-          </div>
-        </div>
-        <textarea
-          className="capstone-textarea"
-          style={{ minHeight: 480 }}
-          placeholder={`Option ${option}: ${options.find(o=>o.id===option)?.label}\n\nBegin your strategic analysis here. Structure it around:\n1. Context & Organizational Purpose\n2. External Environment Analysis\n3. Internal Capabilities Assessment\n4. Current Strategy Evaluation\n5. Strategic Recommendations\n\nAim for 4,000–6,000 words of substantive analysis.`}
-          value={text}
-          onChange={e => save(e.target.value)}
-        />
-      </div>
-
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <button
-          className="btn btn-primary btn-lg"
-          onClick={handleSubmit}
-          disabled={wordCount < 500}
-        >
-          Submit Capstone →
-        </button>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          {wordCount < 500 ? `${500 - wordCount} more words to enable submission` : 'Ready to submit'}
-        </span>
-      </div>
-    </div>
-  );
-};
-
 window.ModulePage = ModulePage;
 window.ModuleOverview = ModuleOverview;
-window.CapstoneView = CapstoneView;

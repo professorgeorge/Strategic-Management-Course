@@ -1,7 +1,7 @@
 // Strategic Management — Service Worker
 // Cache-first for static assets, network-first for external resources
 
-const CACHE_NAME = 'smc-course-v1';
+const CACHE_NAME = 'smc-course-v2';
 const CACHE_VERSION = 1;
 
 const STATIC_ASSETS = [

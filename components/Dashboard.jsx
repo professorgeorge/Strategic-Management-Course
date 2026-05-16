@@ -1,6 +1,6 @@
 // components/Dashboard.jsx
 
-const Dashboard = ({ setRoute, progress }) => {
+const Dashboard = ({ setRoute, progress, studentName }) => {
   const meta = window.COURSE_META;
   const modules = meta.modules;
 
@@ -61,7 +61,9 @@ const Dashboard = ({ setRoute, progress }) => {
 
       <div className="dashboard">
         <div className="dashboard-hero">
-          <div className="dashboard-welcome">Welcome Back</div>
+          <div className="dashboard-welcome">
+            {studentName ? `Welcome back, ${studentName.split(' ')[0]}` : 'Welcome Back'}
+          </div>
           <h1 className="dashboard-title">Strategic Management<br />MBA Certificate Course</h1>
           <p className="dashboard-subtitle">
             A rigorous, future-facing curriculum spanning foundations to emerging frontiers —
