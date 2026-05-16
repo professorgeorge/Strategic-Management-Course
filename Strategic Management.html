@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strategic Management — MBA Certificate Course</title>
+  <meta name="description" content="A premium self-paced MBA Strategic Management course by Professor Babu George. Rigorous, future-focused, globally relevant." />
+  <meta name="author" content="Professor Babu George" />
+
+  <!-- PWA Meta -->
+  <meta name="application-name" content="Strat. Mgmt MBA" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Strat. Mgmt" />
+  <meta name="theme-color" content="#c87a28" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1c1a16" media="(prefers-color-scheme: dark)" />
+  <meta name="msapplication-TileColor" content="#c87a28" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="app.css" />
+
+  <!-- React + Babel (pinned) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <style>
+    /* ── Loading screen ──────────────────────────────────────────────────── */
+    #loading {
+      position: fixed; inset: 0;
+      background: #1c1a16;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px; z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+
+    .loading-monogram {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 3rem; font-weight: 300;
+      color: #c87a28;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+    .loading-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.1rem; font-weight: 400;
+      color: rgba(237,233,227,0.6);
+      letter-spacing: 0.04em;
+    }
+    .loading-bar {
+      width: 80px; height: 2px;
+      background: rgba(237,233,227,0.1);
+      border-radius: 99px; overflow: hidden;
+    }
+    .loading-fill {
+      height: 100%;
+      background: #c87a28;
+      border-radius: 99px;
+      animation: loadpulse 1.5s ease-in-out infinite;
+    }
+    @keyframes loadpulse {
+      0%   { width: 0%; opacity: 1; }
+      60%  { width: 90%; opacity: 1; }
+      100% { width: 100%; opacity: 0; }
+    }
+
+    /* ── Offline banner ───────────────────────────────────────────────────── */
+    #offline-banner {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #1c1a16; color: #ede9e3;
+      padding: 10px 24px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      text-align: center;
+      z-index: 500;
+      border-top: 1px solid rgba(200,122,40,0.4);
+    }
+    .offline #offline-banner { display: block; }
+
+    /* ── Print (certificate) ─────────────────────────────────────────────── */
+    @media print {
+      .sidebar, .topbar, .lesson-sidebar,
+      .theme-toggle, button, #offline-banner { display: none !important; }
+      .certificate {
+        position: fixed; inset: 0;
+        width: 100vw; height: 100vh;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading screen -->
+  <div id="loading">
+    <div class="loading-monogram">SM</div>
+    <div class="loading-title">Strategic Management</div>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+  </div>
+
+  <!-- Offline notice -->
+  <div id="offline-banner">
+    ☁ You are offline — your progress is saved locally and the course is fully available.
+  </div>
+
+  <!-- App root -->
+  <div id="root"></div>
+
+  <!-- ── Course Data (plain JS — no JSX, load first) ──────────────────── -->
+  <script src="data/course-meta.js"></script>
+  <script src="data/course-content.js"></script>
+  <script src="data/course-assessments.js"></script>
+
+  <!-- ── React Components (Babel — load in dependency order) ─────────── -->
+  <script type="text/babel" src="components/Sidebar.jsx"></script>
+  <script type="text/babel" src="components/Dashboard.jsx"></script>
+  <script type="text/babel" src="components/LessonView.jsx"></script>
+  <script type="text/babel" src="components/Quiz.jsx"></script>
+  <script type="text/babel" src="components/Certificate.jsx"></script>
+  <script type="text/babel" src="components/Journal.jsx"></script>
+  <script type="text/babel" src="components/ModulePage.jsx"></script>
+
+  <!-- ── Main App (mounts React tree) ────────────────────────────────── -->
+  <script type="text/babel" src="App.jsx"></script>
+
+  <!-- ── Bootstrap scripts ────────────────────────────────────────────── -->
+  <script>
+    // Hide loading screen once app is ready
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const el = document.getElementById('loading');
+        if (el) {
+          el.classList.add('hidden');
+          setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+        }
+      }, 1000);
+    });
+
+    // Offline / online detection
+    function updateOnlineStatus() {
+      if (!navigator.onLine) {
+        document.body.classList.add('offline');
+      } else {
+        document.body.classList.remove('offline');
+      }
+    }
+    window.addEventListener('online',  updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // Register service worker for PWA / offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            console.log('[SW] Registered. Scope:', reg.scope);
+            // Check for updates every time the page loads
+            reg.update();
+          })
+          .catch(err => {
+            console.warn('[SW] Registration failed:', err);
+          });
+      });
+    }
+  </script>
+
+</body>
+</html>

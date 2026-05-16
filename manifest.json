@@ -1,0 +1,45 @@
+{
+  "name": "Strategic Management — MBA Certificate Course",
+  "short_name": "Strat. Mgmt",
+  "description": "A premium self-paced MBA Strategic Management course by Professor Babu George. Rigorous, future-focused, globally relevant.",
+  "start_url": "./Strategic Management.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf9f7",
+  "theme_color": "#c87a28",
+  "categories": ["education", "business"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Go to your learning dashboard",
+      "url": "./Strategic Management.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Journal",
+      "short_name": "Journal",
+      "description": "Open your strategic learning journal",
+      "url": "./Strategic Management.html#journal",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
